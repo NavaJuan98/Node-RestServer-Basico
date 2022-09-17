@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { dbConexion } = require('../database/conn');
 
 class Server {
 
@@ -8,18 +9,25 @@ class Server {
         this.port = process.env.PORT;
         this.usersPath = '/api/users';
 
+        // CONECTAR BASE DE DATOS
+        this.conectarDB();
+        
         // MIDDLEWARES
-        this.middleware();
+        this.middlewares();
 
         //ROUTES
         this.routes();
+    }
+
+    async conectarDB() {
+        await dbConexion();
     }
 
     routes() {
         this.app.use( this.usersPath, require('../routes/user.routes'))
     }
 
-    middleware() {
+    middlewares() {
         this.app.use( express.static('public') );        
         this.app.use( cors() );
         this.app.use( express.json() );

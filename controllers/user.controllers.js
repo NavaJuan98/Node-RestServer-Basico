@@ -1,44 +1,65 @@
 const { response } = require('express');
+const Usuario = require('../models/Usuario');
+const bcrypt = require('bcryptjs');
 
-const getUser = (req, res = response) => {
-    const { id = 5 } = req.params;
-    if(id) {
-        res.status(200).json({
-            id
-        });
-    }else {
-        res.status(300).json({
-            msg: 'Id Required.'
-        });
-    }
+
+const getUser = async(req, res = response) => {
+    const { desde, limite } = req.params;
+    const query = { estado: true };
+    // const usuarios = await Usuario.find()
+    //     .skip(desde)
+    //     .limit(limite);
+    // const total = await Usuario.find().countDocuments();
+
+    const [ usuarios, total]= await Promise.all([
+        Usuario.find(query)
+        .skip(desde)
+        .limit(limite),
+        Usuario.find(query).countDocuments()
+    ]);
+
+    res.status(201).json({
+        total,
+        usuarios
+    });
 }
 
-const createUser = (req, res = response) => {
-    const { id = 100, name = 'juan', age = 24} = req.query;
-    if(id && name && age ) {
-        res.status(201).json({
-            id,
-            name,
-            age
-        });
-    }else {
-        res.status(300).json({
-            msg: 'Id, name and age Required.'
-        });
-    }
+const createUser = async(req, res = response) => {
+
+    const { nombre, email, password, rol } = req.body;
+    const usuario = new Usuario( { nombre, email, password, rol } );
+
+    const salt = bcrypt.genSaltSync();
+
+    usuario.password = bcrypt.hashSync( password, salt );
+    await usuario.save();
+
+
+
+    res.status(201).json({
+        msg: 'Usuario Creado con exito!.',
+        usuario 
+    });
 }
 
-const updateUser = (req, res = response) => {
-    const { id = 7} = req.params;
-    if(id) {
+const updateUser = async(req, res = response) => {
+
+    const { id } = req.params;
+    const { _id, password, google, email, ...resto } = req.body;
+    
+    if( password ) {
+        const salt = bcrypt.genSaltSync();
+    
+        resto.password = bcrypt.hashSync( password, salt );
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate( id, resto );
+
+    if( usuario ) {
         res.status(202).json({
-            id,
-            msg: 'Succesfully updated.'
-        });
-    }else {
-        res.status(300).json({
-            msg: 'Id Required.'
-        });
+            msg: 'Usuario actualizado con exito!.',
+            usuario
+        })
     }
 }
 
@@ -56,17 +77,18 @@ const patchUser = (req, res = response) => {
     }
 }
 
-const deleteUser = (req, res = response) => {
-    const { id = 7} = req.params;
-    if(id) {
+const deleteUser = async(req, res = response) => {
+    const { id } = req.params;
+
+    // const usuario = await Usuario.findByIdAndDelete( id );
+
+    const usuario = await Usuario.findByIdAndUpdate( id, { estado: false });
+
+    if( usuario ) {
         res.status(200).json({
-            id,
-            msg: 'Succesfully deleted.'
-        });
-    }else {
-        res.status(300).json({
-            msg: 'Id Required.'
-        });
+            msg: 'Usuario Eliminado!.',
+            usuario
+        })
     }
 }
 
