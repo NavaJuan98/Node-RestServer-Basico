@@ -80,14 +80,18 @@ const patchUser = (req, res = response) => {
 const deleteUser = async(req, res = response) => {
     const { id } = req.params;
 
+    // console.log(req.uid);
+
     // const usuario = await Usuario.findByIdAndDelete( id );
 
     const usuario = await Usuario.findByIdAndUpdate( id, { estado: false });
+    const usuarioAutenticado = req.usuarioAutenticado;
 
     if( usuario ) {
         res.status(200).json({
             msg: 'Usuario Eliminado!.',
-            usuario
+            usuario,
+            usuarioAutenticado
         })
     }
 }

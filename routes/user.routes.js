@@ -7,6 +7,8 @@ const { getUser,
     deleteUser, 
     patchUser } = require('../controllers/user.controllers');
 const { validarRole, validarEmail, validarIdExistente } = require('../helpers/custom-validator');
+const { validarJWT } = require('../middlewares/validar-jwt');
+const { validarRoles, tieneRole } = require('../middlewares/validar-roles');
 const router = Router();
 
 router.get('/', getUser);
@@ -29,6 +31,9 @@ router.put('/:id',[
 ], updateUser);
 router.patch('/:id', patchUser);
 router.delete('/:id',[
+    validarJWT,
+    // validarRoles,
+    tieneRole('ADMIN_ROLE', 'USER_ROLE'),
     check('id', 'El id no es valido.').isMongoId(),
     check('id').custom( validarIdExistente ),
     validarCampos,
